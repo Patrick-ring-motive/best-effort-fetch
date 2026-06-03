@@ -99,3 +99,48 @@
           });
       }
   };
+
+async function fetchAllWithRetry(requests, concurrency = 6) {
+  const results = new Array(requests.length);
+  const retries = [];
+  
+  const requestsLength = requests.length;
+  for (let i = 0; i < requestsLength; i += concurrency) {
+    const batch = requests.slice(i, i + concurrency);
+    const settled = await Promise.all(batch.map(req => fetchResponse(req.clone())));
+
+    for (const [j, res] of settled.entries()) {
+      const idx = i + j;
+      if (/^2/.test(res.status)){
+        results[idx] = res;
+        Q(()=>requests[idx].body.cancel());
+      }else{
+        retries.push(idx);
+      }
+    }
+  }
+
+  for (const i of retries) {
+    results[i] = await fetchResponse(requests[i].url, requests[i]);
+  }
+  return results;
+}
+
+async function serializeResponse(res) {
+  return {
+    status: String(res?.status),
+    statusText: String(res?.statusText),
+    headers: res?.headers?.entries ? Object.fromEntries(res.headers.entries()):res?.headers,
+    body: await $text(res)
+  };
+}
+
+export default {
+  async fetch(request, env, ctx) {
+    const payload = await request.json();
+    const requests = payload.map(x=>new Request(String(x.url ?? x),Object(x)));
+    const responses = await fetchAllWithRetry(requests);
+    const flatResponses = await Promise.all(responses.map(serializeResponse));
+    return new Response(JSON.stringify(flatResponses));
+  }
+};
