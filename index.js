@@ -59,40 +59,43 @@
           return new Response(String(initialFetchError));
       }
   }
-const encoder = new TextEncoder();
-const encode = encoder.encode.bind(encoder);
+  const encoder = new TextEncoder();
+  const encode = encoder.encode.bind(encoder);
 
-async function $bytes(res){
-  const chunks = [];
-  try{
-    for await(const chunk of res?.body??[]){
-      try{
-       chunks.push(...chunk);
-      }catch{
-        break;
+  async function $bytes(res) {
+      const chunks = [];
+      try {
+          for await (const chunk of res?.body ?? []) {
+              try {
+                  chunks.push(...chunk);
+              } catch {
+                  break;
+              }
+          }
+      } catch (e) {
+          return encode(String(e));
       }
-    }
-  }catch(e){
-    return encode(String(e));
+      return new Uint8Array(chunks);
   }
-  return new Uint8Array(chunks);
-}
 
-const decoder = new TextDecoder();
-const decode = decoder.decode.bind(decoder);
+  const decoder = new TextDecoder();
+  const decode = decoder.decode.bind(decoder);
 
-async function $text(res){
-  try{
-    return decode(await $bytes(res));
-  }catch(e){
-    return String(e);
+  async function $text(res) {
+      try {
+          return decode(await $bytes(res));
+      } catch (e) {
+          return String(e);
+      }
   }
-}
 
-const fetchResponse = async(...args)=>{
-  try{
-    return await bestEffortFetch(...args);
-  }catch(e){
-    return new Response(String(e),{status:500,statusText:String(e)});
-  }
-};
+  const fetchResponse = async (...args) => {
+      try {
+          return await bestEffortFetch(...args);
+      } catch (e) {
+          return new Response(String(e), {
+              status: 500,
+              statusText: String(e)
+          });
+      }
+  };
