@@ -27,7 +27,7 @@ const isNullish = x => x === null || x === undefined;
                   value
                 } = await originalReader.read();
 
-                if (done == true || (isNullish(done) && isNullish(value)) {
+                if (done == true || (isNullish(done) && isNullish(value))) {
                   Q(()=>controller.close());
                 } else {
                   controller.enqueue(value);
