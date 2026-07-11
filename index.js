@@ -88,8 +88,8 @@
 
   async function $text(res) {
     try {
-      if(!res.body){
-        return res.statusText||'';
+      if (!res.body) {
+        return res.statusText || '';
       }
       return decode(await $bytes(res));
     } catch (e) {
