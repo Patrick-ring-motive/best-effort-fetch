@@ -72,7 +72,7 @@
     try {
       for await (const chunk of res?.body ?? []) {
         try {
-          chunks.push(...chunk);
+          chunks.push(chunk);
         } catch {
           break;
         }
@@ -80,7 +80,7 @@
     } catch (e) {
       return encode(String(e));
     }
-    return new Uint8Array(chunks);
+    return new Uint8Array(await new Blob(chunks).arrayBuffer());
   }
 
   const decoder = new TextDecoder();
