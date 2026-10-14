@@ -33,11 +33,11 @@
               streamError,
             );
 
-            Q(() => controller.close());
+            Q(() => controller?.close?.()?.catch?.(() => {}));
           }
         },
         cancel(reason) {
-          Q(() => originalReader.cancel(reason).catch(() => {}));
+          Q(() => originalReader?.cancel?.(reason)?.catch?.(() => {}));
         },
       });
       return new Response(resilientStream, {
@@ -69,16 +69,22 @@
 
   async function $bytes(res) {
     const chunks = [];
+    let reader;
     try {
-      for await (const chunk of res?.body ?? []) {
-        try {
-          chunks.push(chunk);
-        } catch {
-          break;
+      reader = res?.body?.getReader?.();
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done == true || (isNullish(done) && isNullish(value))) {
+            break;
+          }
+          chunks.push(value);
         }
       }
     } catch (e) {
       return encode(String(e));
+    } finally {
+      Q(()=>reader?.releaseLock?.()?.catch?.(() => {}));
     }
     return new Uint8Array(await new Blob(chunks).arrayBuffer());
   }
@@ -107,6 +113,7 @@
       });
     }
   };
+
 
   async function fetchAllWithRetry(requests, concurrency = 6) {
     const results = new Array(requests.length);
