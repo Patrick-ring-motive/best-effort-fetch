@@ -74,7 +74,10 @@
       reader = res?.body?.getReader?.();
       if (reader) {
         while (true) {
-          const { done, value } = await reader.read();
+          const {
+            done,
+            value
+          } = await reader.read();
           if (done == true || (isNullish(done) && isNullish(value))) {
             break;
           }
@@ -84,7 +87,7 @@
     } catch (e) {
       return encode(String(e));
     } finally {
-      Q(()=>reader?.releaseLock?.()?.catch?.(() => {}));
+      Q(() => reader?.releaseLock?.()?.catch?.(() => {}));
     }
     return new Uint8Array(await new Blob(chunks).arrayBuffer());
   }
@@ -113,7 +116,6 @@
       });
     }
   };
-
 
   async function fetchAllWithRetry(requests, concurrency = 6) {
     const results = new Array(requests.length);
