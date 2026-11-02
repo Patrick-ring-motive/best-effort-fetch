@@ -4,6 +4,19 @@
     } catch {}
   };
 
+const encoder = new TextEncoder();
+const encode = encoder.encode.bind(encoder);
+
+
+const safeStatusText = (value) =>
+  Q(() => {
+    const bytes = encode(String(value)).slice(0, 200);
+    const latin1 = String.fromCharCode(...bytes);
+    const flat = JSON.stringify(latin1.replaceAll(/\s+/g, " "));
+    return flat.replaceAll(String.fromCharCode(127), "DEL");
+  }) ?? "";
+
+
   const isNullish = x => x === null || x === undefined;
 
   async function bestEffortResponse(response) {
@@ -48,7 +61,7 @@
     } catch (e) {
       return new Response(String(e), {
         status: 500,
-        statusText: String(e)
+        statusText: safeStatusText(e)
       });
     }
   }
@@ -60,13 +73,11 @@
     } catch (e) {
       return new Response(String(e), {
         status: 500,
-        statusText: String(e)
+        statusText: safeStatusText(e)
       });
     }
   }
-  const encoder = new TextEncoder();
-  const encode = encoder.encode.bind(encoder);
-
+  
   async function $bytes(res) {
     const chunks = [];
     let reader;
@@ -112,7 +123,7 @@
     } catch (e) {
       return new Response(String(e), {
         status: 500,
-        statusText: String(e)
+        statusText: safeStatusText(e)
       });
     }
   };
